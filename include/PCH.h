@@ -36,7 +36,7 @@ using namespace clib_util::singleton;
 #define _1_6_1170 (unsigned short)1U, (unsigned short)6U, (unsigned short)1170U, (unsigned short)0U
 
 #define SingletonClass clib_util::singleton::ISingleton
-
+#define _debugEDID clib_util::editorID::get_editorID
 
 
 namespace stl {

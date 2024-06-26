@@ -1,5 +1,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
+#include "services.h"
+
 namespace Log {
     void SetupLog() {
         auto logsFolder = SKSE::log::log_directory();
@@ -27,6 +29,9 @@ namespace Log {
 void MessageHandler(SKSE::MessagingInterface::Message* a_message) {
     switch (a_message->type) {
     case SKSE::MessagingInterface::kDataLoaded:
+        if (!Services::InstallDataLoadedPatches()) _loggerError("WARNING: At least one step failed.");
+        _loggerInfo("Finished startup tasks.");
+        _loggerInfo("----------------------------------------------------------------");
         break;
     case SKSE::MessagingInterface::kNewGame:
     case SKSE::MessagingInterface::kPostLoadGame:
@@ -71,6 +76,5 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface * a_
     SKSE::Init(a_skse);
     auto messaging = SKSE::GetMessagingInterface();
     messaging->RegisterListener(MessageHandler);
-
     return true;
 }
