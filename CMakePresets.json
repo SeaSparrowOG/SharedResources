@@ -53,6 +53,15 @@
       }
     },
     {
+      "name": "ae-debug",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "BUILD_SKYRIMAE": true,
+        "DEBUG_CONFIGURATION":  true
+      }
+    },
+    {
       "name": "vs2022-windows-vcpkg-ng",
       "inherits": [
         "cmake-dev",
@@ -71,6 +80,16 @@
         "vs2022",
         "ae"
       ]
+    },
+    {
+      "name": "vs2022-windows-vcpkg-ae-debug",
+      "inherits": [
+        "cmake-dev",
+        "vcpkg",
+        "windows",
+        "vs2022",
+        "ae-debug"
+      ]
     }
   ],
   "buildPresets": [
@@ -78,6 +97,11 @@
       "name": "Release",
       "configurePreset": "vs2022-windows-vcpkg-ae",
       "configuration": "Release"
+    },
+    {
+      "name": "Latest - Test",
+      "configurePreset": "vs2022-windows-vcpkg-ae-debug",
+      "configuration": "Debug"
     },
     {
       "name": "Release - NG",

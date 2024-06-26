@@ -11,13 +11,19 @@ namespace Log {
         auto loggerPtr = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
 
         spdlog::set_default_logger(std::move(loggerPtr));
+#ifdef LOG_DEBUG
+        spdlog::set_level(spdlog::level::debug);
+        spdlog::flush_on(spdlog::level::debug);
+#else
         spdlog::set_level(spdlog::level::info);
         spdlog::flush_on(spdlog::level::info);
+#endif
 
         //Pattern
         spdlog::set_pattern("%v");
     }
 }
+
 void MessageHandler(SKSE::MessagingInterface::Message* a_message) {
     switch (a_message->type) {
     case SKSE::MessagingInterface::kDataLoaded:
@@ -58,7 +64,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface * a_
 #ifdef SKYRIM_AE
     _loggerInfo("    >Latest Version. Maintained by: {}.", Version::AUTHOR);
 #else
-    _loggerInfo("    >1.5 Version. Do not report ANY issues with this version.");
+    _loggerInfo("    >Older Version. Do not report ANY issues with this version.");
 #endif
     _loggerInfo("----------------------------------------------------------------");
 

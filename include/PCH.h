@@ -30,9 +30,14 @@ using namespace clib_util::singleton;
 
 #include "Version.h"
 
+#define _loggerDebug SKSE::log::debug
 #define _loggerInfo SKSE::log::info
 #define _loggerError SKSE::log::error
 #define _1_6_1170 (unsigned short)1U, (unsigned short)6U, (unsigned short)1170U, (unsigned short)0U
+
+#define SingletonClass clib_util::singleton::ISingleton
+
+
 
 namespace stl {
 	template <class T>

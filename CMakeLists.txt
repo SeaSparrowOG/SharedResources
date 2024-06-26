@@ -8,6 +8,7 @@ option(SUPPORT_VR "Build for VR." OFF)
 option(BUILD_SKYRIMVR "Build for Skyrim VR" OFF)
 option(BUILD_SKYRIMAE "Build for Skyrim AE" OFF)
 option(BUILD_NG "Build for Skyrim SE and AE." OFF)
+option(DEBUG_CONFIGURATION "Sets log level to debug." OFF)
 
 # ---- Cache build vars ----
 macro(set_from_environment VARIABLE)
@@ -44,6 +45,10 @@ set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE 
 set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
 set(Boost_USE_STATIC_RUNTIME OFF CACHE BOOL "")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
+
+if (DEBUG_CONFIGURATION)
+	add_compile_definitions(LOG_DEBUG)
+endif()
 
 if (BUILD_SKYRIMAE)
 	add_compile_definitions(SKYRIM_AE)
