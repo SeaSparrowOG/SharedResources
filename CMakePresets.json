@@ -101,7 +101,7 @@
     {
       "name": "Latest - Test",
       "configurePreset": "vs2022-windows-vcpkg-ae-debug",
-      "configuration": "Debug"
+      "configuration": "Release"
     },
     {
       "name": "Release - NG",
