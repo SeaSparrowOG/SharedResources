@@ -1,7 +1,0 @@
-[submodule "Extern/CommonlibSSE"]
-	path = Extern/CommonlibSSE
-	url = https://github.com/powerof3/CommonLibSSE
-[submodule "Extern/CommonlibNG"]
-	path = Extern/CommonlibNG
-	url = https://github.com/alandtse/CommonLibVR
-	branch = ng
