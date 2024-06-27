@@ -1,46 +1,5 @@
 #include "Armillary/Alchemy/hooks.h"
 
-namespace INI {
-	bool ShouldRebuildINI(CSimpleIniA* a_ini) {
-		const char* section = "Alchemy";
-		const char* keys[] = {
-			"uncommonFormlist",
-			"rareFormlist",
-			"uniqueFormlist",
-			"qualityPerk",
-            "stimulants",
-            "stimulantsEffectHealth",
-            "stimulantsEffectStamina",
-            "stimulantsEffectMagicka",
-            "slowDeath",
-            "slowDeathEffect"};
-
-		int sectionLength = sizeof(keys) / sizeof(keys[0]);
-		std::list<CSimpleIniA::Entry> keyHolder;
-
-		a_ini->GetAllKeys(section, keyHolder);
-		if (std::size(keyHolder) != sectionLength) return true;
-		for (auto* key : keys) {
-			if (!a_ini->KeyExists(section, key)) return true;
-		}
-		return false;
-	}
-
-    bool IsHex(std::string const& s) {
-        return s.compare(0, 2, "0x") == 0
-            && s.size() > 2
-            && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
-    }
-
-    RE::TESForm* ParseForm(const std::string& a_identifier) {
-        if (!IsHex(a_identifier)) return nullptr;
-
-        auto formID = clib_util::string::to_num<RE::FormID>(a_identifier, true);
-        auto* baseForm = RE::TESDataHandler::GetSingleton()->LookupForm(formID, "Armillary.esp"sv);
-        return baseForm;
-    }
-}
-
 namespace Armillary {
 	bool Alchemy::Hooks::SelectedItemMonitor::InstallHook() 
     {
@@ -99,60 +58,65 @@ namespace Armillary {
 
     bool Alchemy::Hooks::SelectedItemMonitor::PreloadForms()
     {
-		std::filesystem::path f{ "./Data/SKSE/Plugins/Armillary.ini" };
-		bool createEntries = false;
-		if (!std::filesystem::exists(f)) {
-			std::fstream createdINI;
-			createdINI.open(f, std::ios::out);
-			createdINI.close();
-			createEntries = true;
-		}
+        _loggerDebug("ARM: Selected Item Monitor: Looking up forms...");
+        const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+        if (!vm) {
+            return false;
+        }
 
-		CSimpleIniA ini;
-		ini.SetUnicode();
-		ini.LoadFile(f.c_str());
-		if (!createEntries) { createEntries = INI::ShouldRebuildINI(&ini); }
+        const auto bindPolicy = vm->GetObjectBindPolicy();
+        const auto handlePolicy = vm->GetObjectHandlePolicy();
 
-		if (createEntries) {
-			ini.Delete("Alchemy", NULL);
-            ini.SetValue("Alchemy", "uncommonFormlist", "0xFB06");
-            ini.SetValue("Alchemy", "rareFormlist", "0xFB07");
-            ini.SetValue("Alchemy", "uniqueFormlist", "0xFB08");
-            ini.SetValue("Alchemy", "qualityPerk", "0x5900");
-            ini.SetValue("Alchemy", "slowDeath", "0x5901");
-            ini.SetValue("Alchemy", "slowDeathEffect", "0x14C09");
-            ini.SetValue("Alchemy", "stimulants", "0x5903");
-            ini.SetValue("Alchemy", "stimulantsEffectHealth", "0x14C0A");
-            ini.SetValue("Alchemy", "stimulantsEffectStamina", "0x14C0B");
-            ini.SetValue("Alchemy", "stimulantsEffectMagicka", "0x14C0C");
-			ini.SaveFile(f.c_str());
-		}
+        if (!bindPolicy || !handlePolicy) {
+            return false;
+        }
 
-        _loggerDebug("    Fetching uncommon list...");
-        auto* uncommonFormlistBase = INI::ParseForm(ini.GetValue("Alchemy", "uncommonFormlist", "0xFB06"));
-        auto* uncommonFormlist = uncommonFormlistBase ? uncommonFormlistBase->As<RE::BGSListForm>() : nullptr;
-        if (!uncommonFormlist) return false;
+        const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
+        const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
 
-        _loggerDebug("    Fetching rare list...");
-        auto* rareFormlistBase = INI::ParseForm(ini.GetValue("Alchemy", "rareFormlist", "0xFB07"));
-        auto* rareFormlist = rareFormlistBase ? rareFormlistBase->As<RE::BGSListForm>() : nullptr;
-        if (!rareFormlist) return false;
+        RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
+        std::uint32_t nonConverted;
+        bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder", properties, nonConverted);
 
-        _loggerDebug("    Fetching unique list...");
-        auto* uniqueFormlistBase = INI::ParseForm(ini.GetValue("Alchemy", "uniqueFormlist", "0xFB08"));
-        auto* uniqueFormlist = uniqueFormlistBase ? uniqueFormlistBase->As<RE::BGSListForm>() : nullptr;
-        if (!uniqueFormlist) return false;
+        for (const auto& [name, var] : properties) {
+            if (name == "ARM_Alchemy_FRL_UnCommonIngredients") {
+                auto* foundForm = var.Unpack<RE::BGSListForm*>();
+                if (!foundForm) {
+                    continue;
+                }
 
-        _loggerDebug("    Fetching quality perk...");
-        auto* qualityPerkBase = INI::ParseForm(ini.GetValue("Alchemy", "qualityPerk", "0x5900"));
-        auto* qualityPerk = qualityPerkBase ? qualityPerkBase->As<RE::BGSPerk>() : nullptr;
-        if (!qualityPerk) return false;
+                this->uncommonIngredients = foundForm;
+            }
+            else if (name == "ARM_Alchemy_FRL_RareIngredients") {
+                auto* foundForm = var.Unpack<RE::BGSListForm*>();
+                if (!foundForm) {
+                    continue;
+                }  
 
-        this->uncommonIngredients = uncommonFormlist;
-        this->rareIngredients = rareFormlist;
-        this->uniqueIngredients = uniqueFormlist;
-        this->qualityIngredientsPerk = qualityPerk;
-        _loggerDebug("    All forms fetched successfully");
+                this->rareIngredients = foundForm;
+            }
+            else if (name == "ARM_Alchemy_FRL_UniqueIngredients") {
+                auto* foundForm = var.Unpack<RE::BGSListForm*>();
+                if (!foundForm) {
+                    continue;
+                }   
+
+                this->uniqueIngredients = foundForm;
+            }
+            else if (name == "ARM_Alchemy_PRK_QualityIngredients50") {
+                auto* foundForm = var.Unpack<RE::BGSPerk*>();
+                if (!foundForm) {
+                    continue;
+                }             
+
+                this->qualityIngredientsPerk = foundForm;
+            }
+        }
+
+        vm->ResetAllBoundObjects(handle);
+        if (!qualityIngredientsPerk && uncommonIngredients &&
+            rareIngredients && uniqueIngredients) return false;
+        _loggerDebug("ARM: Selected Item Monitoring: Found all forms.");
         return true;
     }
 
@@ -165,72 +129,82 @@ namespace Armillary {
     //Created Item Monitoring
     bool Alchemy::Hooks::CreatedItemMonitoring::PreloadForms()
     {
-        std::filesystem::path f{ "./Data/SKSE/Plugins/Armillary.ini" };
-        bool createEntries = false;
-        if (!std::filesystem::exists(f)) {
-            std::fstream createdINI;
-            createdINI.open(f, std::ios::out);
-            createdINI.close();
-            createEntries = true;
+        _loggerDebug("ARM: Created Item Monitoring: Looking up forms...");
+        const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+        if (!vm) {
+            return false;
         }
 
-        CSimpleIniA ini;
-        ini.SetUnicode();
-        ini.LoadFile(f.c_str());
-        if (!createEntries) { createEntries = INI::ShouldRebuildINI(&ini); }
+        const auto bindPolicy = vm->GetObjectBindPolicy();
+        const auto handlePolicy = vm->GetObjectHandlePolicy();
 
-        if (createEntries) {
-            ini.Delete("Alchemy", NULL);
-            ini.SetValue("Alchemy", "uncommonFormlist", "0xFB06");
-            ini.SetValue("Alchemy", "rareFormlist", "0xFB07");
-            ini.SetValue("Alchemy", "uniqueFormlist", "0xFB08");
-            ini.SetValue("Alchemy", "qualityPerk", "0x5900");
-            ini.SetValue("Alchemy", "slowDeath", "0x5901");
-            ini.SetValue("Alchemy", "slowDeathEffect", "0x14C09");
-            ini.SetValue("Alchemy", "stimulants", "0x5903");
-            ini.SetValue("Alchemy", "stimulantsEffectHealth", "0x14C0A");
-            ini.SetValue("Alchemy", "stimulantsEffectStamina", "0x14C0B");
-            ini.SetValue("Alchemy", "stimulantsEffectMagicka", "0x14C0C");
-            ini.SaveFile(f.c_str());
+        if (!bindPolicy || !handlePolicy) {
+            return false;
         }
 
-        _loggerDebug("    Fetching health effect...");
-        auto* stimulantsEffectHealthBase = INI::ParseForm(ini.GetValue("Alchemy", "stimulantsEffectHealth", "0x14C0A"));
-        auto* stimulantsHealth = stimulantsEffectHealthBase ? stimulantsEffectHealthBase->As<RE::EffectSetting>() : nullptr;
-        if (!stimulantsHealth) return false;
+        const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
+        const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
 
-        _loggerDebug("    Fetching stamina effect...");
-        auto* stimulantsEffectStaminaBase = INI::ParseForm(ini.GetValue("Alchemy", "stimulantsEffectStamina", "0x14C0B"));
-        auto* stimulantsStamina = stimulantsEffectStaminaBase ? stimulantsEffectStaminaBase->As<RE::EffectSetting>() : nullptr;
-        if (!stimulantsStamina) return false;
+        RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
+        std::uint32_t nonConverted;
+        bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder", properties, nonConverted);
 
-        _loggerDebug("    Fetching magicka effect...");
-        auto* stimulantsEffectMagickaBase = INI::ParseForm(ini.GetValue("Alchemy", "stimulantsEffectMagicka", "0x14C0C"));
-        auto* stimulantsMagicka = stimulantsEffectMagickaBase ? stimulantsEffectMagickaBase->As<RE::EffectSetting>() : nullptr;
-        if (!stimulantsMagicka) return false;
+        for (const auto& [name, var] : properties) {
+            if (name == "ARM_Alchemy_MGF_SlowDeathEffectFFSelf") {
+                auto* foundForm = var.Unpack<RE::EffectSetting*>();
+                if (!foundForm) {
+                    continue;
+                }
 
-        _loggerDebug("    Fetching stimulants perk...");
-        auto* stimulantsBase = INI::ParseForm(ini.GetValue("Alchemy", "stimulants", "0x5903"));
-        auto* stimulants = stimulantsBase ? stimulantsBase->As<RE::BGSPerk>() : nullptr;
-        if (!stimulants) return false;
+                this->slowDeathEffect = foundForm;
+            }
+            else if (name == "ARM_Alchemy_MGF_LastingTreatmentHealthFFSelf") {
+                auto* foundForm = var.Unpack<RE::EffectSetting*>();
+                if (!foundForm) {
+                    continue;
+                }
 
-        _loggerDebug("    Fetching slow death effect...");
-        auto* slowDeathEffectBase = INI::ParseForm(ini.GetValue("Alchemy", "slowDeathEffect", "0x14C09"));
-        auto* death = slowDeathEffectBase ? slowDeathEffectBase->As<RE::EffectSetting>() : nullptr;
-        if (!stimulants) return false;
+                this->stimulantsEffectHealth = foundForm;
+            }
+            else if (name == "ARM_Alchemy_MGF_LastingTreatmentStaminaFFSelf") {
+                auto* foundForm = var.Unpack<RE::EffectSetting*>();
+                if (!foundForm) {
+                    continue;
+                }
 
-        _loggerDebug("    Fetching slow death perk...");
-        auto* slowDeathBase = INI::ParseForm(ini.GetValue("Alchemy", "slowDeath", "0x5901"));
-        auto* slowDeath = slowDeathBase ? slowDeathBase->As<RE::BGSPerk>() : nullptr;
-        if (!slowDeath) return false;
+                this->stimulantsEffectStamina = foundForm;
+            }
+            else if (name == "ARM_Alchemy_MGF_LastingTreatmentMagickaFFSelf") {
+                auto* foundForm = var.Unpack<RE::EffectSetting*>();
+                if (!foundForm) {
+                    continue;
+                }
 
-        this->slowDeathPerk = slowDeath;
-        this->stimulantsPerk = stimulants;
-        this->stimulantsEffectHealth = stimulantsHealth;
-        this->stimulantsEffectStamina = stimulantsStamina;
-        this->stimulantsEffectMagicka = stimulantsMagicka;
-        this->slowDeathEffect = death;
-        _loggerDebug("    All forms fetched successfully");
+                this->stimulantsEffectMagicka = foundForm;
+            }
+            else if (name == "ARM_Alchemy_PRK_SlowDeath80") {
+                auto* foundForm = var.Unpack<RE::BGSPerk*>();
+                if (!foundForm) {
+                    continue;
+                }
+
+                this->slowDeathPerk = foundForm;
+            }
+            else if (name == "ARM_Alchemy_PRK_Stimulants80") {
+                auto* foundForm = var.Unpack<RE::BGSPerk*>();
+                if (!foundForm) {
+                    continue;
+                }
+
+                this->stimulantsPerk = foundForm;
+            }
+        }
+
+        vm->ResetAllBoundObjects(handle);
+        if (!slowDeathPerk && stimulantsPerk &&
+            stimulantsEffectHealth && stimulantsEffectStamina 
+            && stimulantsEffectMagicka && slowDeathEffect) return false;
+        _loggerDebug("ARM: Created Item Monitoring: Found all forms.");
         return true;
     }
 
