@@ -304,7 +304,6 @@ namespace Armillary {
             auto& effects = a_alchemyItem->effects;
             for (auto* effect : effects) {
                 effect->effectItem.magnitude *= newFactor;
-                effect->effectItem.duration *= newFactor;
             }
         }
 
