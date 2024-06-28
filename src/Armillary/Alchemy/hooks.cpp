@@ -3,7 +3,6 @@
 namespace Armillary {
 	bool Alchemy::Hooks::SelectedItemMonitor::InstallHook() 
     {
-        _loggerDebug("_________________________________________________");
         _loggerDebug("ARM: Installing Selected Item Monitoring hook...");
         if (!this->PreloadForms()) return false;
 
@@ -218,6 +217,7 @@ namespace Armillary {
         SKSE::AllocTrampoline(14);
         auto& trampoline = SKSE::GetTrampoline();
         _originalCall = trampoline.write_call<5>(target.address(), &ItemCreationMonitor);
+        _loggerDebug("_________________________________________________");
         return true;
     }
 

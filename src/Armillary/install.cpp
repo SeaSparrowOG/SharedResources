@@ -1,10 +1,18 @@
 #include "Armillary/install.h"
 #include "Armillary/Alchemy/hooks.h"
+#include "Armillary/Conjuration/boundWeaponPatcher.h"
 
 namespace Armillary {
 	bool InstallPatches()
 	{
-		Alchemy::Hooks::Install();
+		_loggerDebug("Preparing to Install Armillary.");
+		_loggerDebug("_________________________________________________");
+		_loggerDebug("Patching Alchemy:");
+		_loggerDebug("_________________________________________________");
+		if (!Alchemy::Hooks::Install()) return false;
+		_loggerDebug("Patching Conjuration:");
+		_loggerDebug("_________________________________________________");
+		if (!Conjuration::BoundWeaponPatcher::PatchBoundWeapons()) return false;
 		return true;
 	}
 }
