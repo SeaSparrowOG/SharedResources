@@ -1,0 +1,15 @@
+Scriptname ARM_ObjectHolder  Hidden 
+{Script that holds all necessary forms for the DLL to function.}
+
+Formlist Property ARM_Alchemy_FRL_UnCommonIngredients Auto
+Formlist Property ARM_Alchemy_FRL_RareIngredients Auto
+Formlist Property ARM_Alchemy_FRL_UniqueIngredients Auto
+
+MagicEffect Property ARM_Alchemy_MGF_SlowDeathEffectFFSelf Auto 
+MagicEffect Property ARM_Alchemy_MGF_LastingTreatmentHealthFFSelf Auto 
+MagicEffect Property ARM_Alchemy_MGF_LastingTreatmentStaminaFFSelf Auto 
+MagicEffect Property ARM_Alchemy_MGF_LastingTreatmentMagickaFFSelf Auto 
+
+Perk Property ARM_Alchemy_PRK_QualityIngredients50 Auto
+Perk Property ARM_Alchemy_PRK_SlowDeath80 Auto
+Perk Property ARM_Alchemy_PRK_Stimulants80 Auto

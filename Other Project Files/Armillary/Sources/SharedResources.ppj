@@ -1,0 +1,24 @@
+<?xml version='1.0'?><!-- Game is either sse, tesv, or fo4 -->
+<PapyrusProject xmlns="PapyrusProject.xsd" 
+    Flags="TESV_Papyrus_Flags.flg" 
+    Game="sse" 
+    Output="Scripts" 
+    Release="false"
+    Optimize="true" 
+    Anonymize="true" 
+    Package="false"
+    Zip="false">
+    <Variables>
+        <Variable Name="ThisProject" Value="."/>
+        <Variable Name="MO2" Value=".."/>
+    </Variables>
+    <Imports>
+        <Import>@ThisProject\Source\Scripts</Import>
+        <Import>@MO2\SeaSparrowSharedResources\Source\Scripts</Import>
+        <Import>@MO2\Skyrim Script Extender (SKSE64)\Source\Scripts</Import>
+        <Import>@MO2\Scripts - Vanilla\Source\Scripts</Import>
+    </Imports>
+    <Folders>
+        <Folder>@ThisProject\Source\Scripts</Folder>
+    </Folders>
+</PapyrusProject>
