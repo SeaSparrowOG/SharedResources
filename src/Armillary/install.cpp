@@ -1,6 +1,7 @@
 #include "Armillary/install.h"
 #include "Armillary/Alchemy/hooks.h"
 #include "Armillary/Conjuration/boundWeaponPatcher.h"
+#include "Armillary/Conjuration/reanimationSpellPatcher.h"
 
 namespace Armillary {
 	bool InstallPatches()
@@ -13,6 +14,7 @@ namespace Armillary {
 		_loggerDebug("Patching Conjuration:");
 		_loggerDebug("_________________________________________________");
 		if (!Conjuration::BoundWeaponPatcher::PatchBoundWeapons()) return false;
+		if (!Conjuration::ReanimationSpellPatcher::ReanimationSpellPatcher::GetSingleton()->PatchReanimationSpells()) return false;
 		return true;
 	}
 }
