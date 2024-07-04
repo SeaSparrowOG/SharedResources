@@ -1,4 +1,5 @@
 #include "Armillary/Alchemy/hooks.h"
+#include "Common/utilityFuncs.h"
 
 namespace Armillary {
 	bool Alchemy::Hooks::SelectedItemMonitor::InstallHook() 
@@ -58,63 +59,31 @@ namespace Armillary {
     bool Alchemy::Hooks::SelectedItemMonitor::PreloadForms()
     {
         _loggerDebug("ARM: Selected Item Monitor: Looking up forms...");
-        const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-        if (!vm) {
-            return false;
-        }
 
-        const auto bindPolicy = vm->GetObjectBindPolicy();
-        const auto handlePolicy = vm->GetObjectHandlePolicy();
+        auto* foundList = UtilityFunctions::GetFormFromQuestScript<RE::BGSListForm>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_FRL_UnCommonIngredients");
+        if (!foundList) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundList));
+        uncommonIngredients = foundList;
 
-        if (!bindPolicy || !handlePolicy) {
-            return false;
-        }
+        foundList = UtilityFunctions::GetFormFromQuestScript<RE::BGSListForm>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_FRL_RareIngredients");
+        if (!foundList) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundList));
+        rareIngredients = foundList;
 
-        const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
-        const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
+        foundList = UtilityFunctions::GetFormFromQuestScript<RE::BGSListForm>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_FRL_UniqueIngredients");
+        if (!foundList) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundList));
+        uniqueIngredients = foundList;
 
-        RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
-        std::uint32_t nonConverted;
-        bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder", properties, nonConverted);
+        auto* foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_PRK_050_QualityIngredients");
+        if (!foundPerk) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundPerk));
+        qualityIngredientsPerk = foundPerk;
 
-        for (const auto& [name, var] : properties) {
-            if (name == "ARM_Alchemy_FRL_UnCommonIngredients") {
-                auto* foundForm = var.Unpack<RE::BGSListForm*>();
-                if (!foundForm) {
-                    continue;
-                }
-
-                this->uncommonIngredients = foundForm;
-            }
-            else if (name == "ARM_Alchemy_FRL_RareIngredients") {
-                auto* foundForm = var.Unpack<RE::BGSListForm*>();
-                if (!foundForm) {
-                    continue;
-                }  
-
-                this->rareIngredients = foundForm;
-            }
-            else if (name == "ARM_Alchemy_FRL_UniqueIngredients") {
-                auto* foundForm = var.Unpack<RE::BGSListForm*>();
-                if (!foundForm) {
-                    continue;
-                }   
-
-                this->uniqueIngredients = foundForm;
-            }
-            else if (name == "ARM_Alchemy_PRK_QualityIngredients50") {
-                auto* foundForm = var.Unpack<RE::BGSPerk*>();
-                if (!foundForm) {
-                    continue;
-                }             
-
-                this->qualityIngredientsPerk = foundForm;
-            }
-        }
-
-        vm->ResetAllBoundObjects(handle);
-        if (!qualityIngredientsPerk && uncommonIngredients &&
-            rareIngredients && uniqueIngredients) return false;
         _loggerDebug("ARM: Selected Item Monitoring: Found all forms.");
         return true;
     }
@@ -128,82 +97,44 @@ namespace Armillary {
     //Created Item Monitoring
     bool Alchemy::Hooks::CreatedItemMonitoring::PreloadForms()
     {
-        _loggerDebug("ARM: Created Item Monitoring: Looking up forms...");
-        const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-        if (!vm) {
-            return false;
-        }
+        auto* foundEffect = UtilityFunctions::GetFormFromQuestScript<RE::EffectSetting>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_MGF_SlowDeathEffectFFSelf");
+        if (!foundEffect) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundEffect));
+        slowDeathEffect = foundEffect;
 
-        const auto bindPolicy = vm->GetObjectBindPolicy();
-        const auto handlePolicy = vm->GetObjectHandlePolicy();
+        foundEffect = UtilityFunctions::GetFormFromQuestScript<RE::EffectSetting>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_MGF_LastingTreatmentHealthFFSelf");
+        if (!foundEffect) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundEffect));
+        stimulantsEffectHealth = foundEffect;
 
-        if (!bindPolicy || !handlePolicy) {
-            return false;
-        }
+        foundEffect = UtilityFunctions::GetFormFromQuestScript<RE::EffectSetting>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_MGF_LastingTreatmentStaminaFFSelf");
+        if (!foundEffect) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundEffect));
+        stimulantsEffectStamina = foundEffect;
 
-        const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
-        const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
+        foundEffect = UtilityFunctions::GetFormFromQuestScript<RE::EffectSetting>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_MGF_LastingTreatmentMagickaFFSelf");
+        if (!foundEffect) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundEffect));
+        stimulantsEffectMagicka = foundEffect;
 
-        RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
-        std::uint32_t nonConverted;
-        bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder", properties, nonConverted);
+        auto* foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_PRK_080_SlowDeath");
+        if (!foundPerk) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundPerk));
+        slowDeathPerk = foundPerk;
 
-        for (const auto& [name, var] : properties) {
-            if (name == "ARM_Alchemy_MGF_SlowDeathEffectFFSelf") {
-                auto* foundForm = var.Unpack<RE::EffectSetting*>();
-                if (!foundForm) {
-                    continue;
-                }
+        foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
+            ("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Alchemy_PRK_080_Stimulants");
+        if (!foundPerk) return false;
+        _loggerDebug("Setting: {}", _debugEDID(foundPerk));
+        stimulantsPerk = foundPerk;
 
-                this->slowDeathEffect = foundForm;
-            }
-            else if (name == "ARM_Alchemy_MGF_LastingTreatmentHealthFFSelf") {
-                auto* foundForm = var.Unpack<RE::EffectSetting*>();
-                if (!foundForm) {
-                    continue;
-                }
-
-                this->stimulantsEffectHealth = foundForm;
-            }
-            else if (name == "ARM_Alchemy_MGF_LastingTreatmentStaminaFFSelf") {
-                auto* foundForm = var.Unpack<RE::EffectSetting*>();
-                if (!foundForm) {
-                    continue;
-                }
-
-                this->stimulantsEffectStamina = foundForm;
-            }
-            else if (name == "ARM_Alchemy_MGF_LastingTreatmentMagickaFFSelf") {
-                auto* foundForm = var.Unpack<RE::EffectSetting*>();
-                if (!foundForm) {
-                    continue;
-                }
-
-                this->stimulantsEffectMagicka = foundForm;
-            }
-            else if (name == "ARM_Alchemy_PRK_SlowDeath80") {
-                auto* foundForm = var.Unpack<RE::BGSPerk*>();
-                if (!foundForm) {
-                    continue;
-                }
-
-                this->slowDeathPerk = foundForm;
-            }
-            else if (name == "ARM_Alchemy_PRK_Stimulants80") {
-                auto* foundForm = var.Unpack<RE::BGSPerk*>();
-                if (!foundForm) {
-                    continue;
-                }
-
-                this->stimulantsPerk = foundForm;
-            }
-        }
-
-        vm->ResetAllBoundObjects(handle);
-        if (!slowDeathPerk && stimulantsPerk &&
-            stimulantsEffectHealth && stimulantsEffectStamina 
-            && stimulantsEffectMagicka && slowDeathEffect) return false;
-        _loggerDebug("ARM: Created Item Monitoring: Found all forms.");
+        if (!(slowDeathEffect && stimulantsEffectHealth && stimulantsEffectStamina && stimulantsEffectMagicka
+            && slowDeathPerk && stimulantsPerk)) return false;
         return true;
     }
 
