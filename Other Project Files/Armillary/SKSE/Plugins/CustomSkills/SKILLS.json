@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/CustomSkills/main/docs/schema/CustomSkill.json",
+  "version": 1,
+  "skydome": {
+    "model": "Armillary/Interface/INTPerkSkydome.nif",
+    "cameraRightPoint": 1
+  },
+  "skills": [
+    "Enchanting",
+    "Smithing",
+    "HeavyArmor",
+    "Block",
+    "TwoHanded",
+    "OneHanded",
+    "Marksman",
+    { "$ref": "Constellations/Agility.json" },
+    "Sneak",
+    "Lockpicking",
+    "Pickpocket",
+    "Speechcraft",
+    "Alchemy",
+    "Illusion",
+    "Conjuration",
+    "Destruction",
+    "Restoration",
+    "Alteration"
+  ]
+}

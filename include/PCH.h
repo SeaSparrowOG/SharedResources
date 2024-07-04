@@ -38,14 +38,19 @@ using namespace clib_util::singleton;
 #define SingletonClass clib_util::singleton::ISingleton
 #define _debugEDID clib_util::editorID::get_editorID
 
-
 namespace stl {
 	template <class T>
 	void write_thunk_call(std::uintptr_t a_src)
 	{
+		auto& trampoline = SKSE::GetTrampoline();
 		SKSE::AllocTrampoline(14);
 
-		auto& trampoline = SKSE::GetTrampoline();
 		T::func = trampoline.write_call<5>(a_src, T::thunk);
 	}
 }
+
+#define register_story_event(T)                                           \
+	{                                                                     \
+		T::GetEventSource()->AddEventSink<T::Event>(GetSingleton());      \
+		logger::info("Registered {} handler"sv, typeid(T::Event).name()); \
+	}

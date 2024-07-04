@@ -26,7 +26,7 @@ namespace Papyrus {
 
 		return true;
 	}
-	void RefrestAbilities(STATIC_ARGS, std::vector<RE::SpellItem*> a_abilities, bool a_add = true) {
+	void RefreshAbilities(STATIC_ARGS, std::vector<RE::SpellItem*> a_abilities, bool a_add = true) {
 		if (a_abilities.empty()) return;
 		auto* player = RE::PlayerCharacter::GetSingleton();
 		if (!player) return;
@@ -54,12 +54,12 @@ namespace Papyrus {
 			if (player->HasPerk(perk)) {
 				player->RemovePerk(perk);
 				if (a_add) {
-					player->AddPerk(perk);
+					player->AddPerk(perk, 1);
 				}
 			}
 			else {
 				if (!a_add) continue;
-				player->AddPerk(perk);
+				player->AddPerk(perk, 1);
 			}
 		}
 	}
@@ -71,7 +71,7 @@ namespace Papyrus {
 		BIND(GetPatchVersion);
 
 		BIND(MeetsMinimumVersion);
-		BIND(RefrestAbilities);
+		BIND(RefreshAbilities);
 		BIND(RefreshPerks);
 	}
 

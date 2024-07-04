@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/CustomSkills/main/docs/schema/skill.json",
+  "id": "Agility",
+  "name": "$Agility_Name",
+  "description": "$Agility_Description",
+  "level": "SeaSparrowSharedResources.esl|80D",
+  "ratio": "SeaSparrowSharedResources.esl|80E",
+  "legendary": "SeaSparrowSharedResources.esl|80F",
+  "nodes": [
+  ]
+}
