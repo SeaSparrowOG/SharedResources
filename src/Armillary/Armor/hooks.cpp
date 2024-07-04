@@ -23,9 +23,9 @@ namespace Armillary::Armor::Hooks {
 
 	float Character__CalculateResistance::thunk(RE::MagicTarget* a_target, RE::MagicItem* a_item, RE::Effect* a_effect, RE::TESBoundObject* a_param4)
 	{
+		float response = func(a_target, a_item, a_effect, a_param4);
 		if (const auto target = a_target->GetTargetAsActor()) {
-			if (target->HasPerk(UnbreakablePerk) && target->IsBlocking()) {
-				float response = func(a_target, a_item, a_effect, a_param4);
+			if (target->HasPerk(UnbreakablePerk)) {
 				if (!a_effect->baseEffect) return response;
 				auto* wornArmor = target->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody);
 				if (!wornArmor) return response;
@@ -41,12 +41,12 @@ namespace Armillary::Armor::Hooks {
 				float charResistValue = target->GetActorValue(resistValue);
 				charResistValue *= 1.0f + target->GetActorValue(RE::ActorValue::kResistMagic) / 100.0f;
 				if (charResistValue / 100.0f > 1.0f - response) {
-					if (charResistValue >= 95.0) return 0.05f;
+					if (charResistValue >= 100.0) return 0.00f;
 					return 1.0f - charResistValue / 100.0f;
 				}
 			}
 		}
-		return func(a_target, a_item, a_effect, a_param4);
+		return response;
 	}
 
 
