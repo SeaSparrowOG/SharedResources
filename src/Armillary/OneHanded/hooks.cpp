@@ -169,12 +169,15 @@ namespace Armillary::OneHanded::Hooks {
 					a_target->DispelEffect(maceProc, ref);
 				}
 				else {
-					a_hitData->totalDamage /= 0.5f;
+					a_hitData->totalDamage /= 2.0f;
 				}
 
 				if (castingSource) {
 					castingSource->CastSpellImmediate(duelistMark, false, attacker, 1.0f, false, 0.0f, attacker);
 				}
+
+				auto targetHandle = a_target->GetHandle();
+				a_target->DispelEffect(duelistProc, targetHandle);
 			}
 		}
 
