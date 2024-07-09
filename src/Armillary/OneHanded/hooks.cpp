@@ -55,6 +55,12 @@ namespace Armillary::OneHanded::Hooks {
 		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
 		maceRank2Perk = foundPerk;
 
+		foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
+			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_060_Carver");
+		if (!foundPerk) return false;
+		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
+		axeRank2Perk = foundPerk;
+
 		//Spells
 
 		auto* foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
@@ -86,6 +92,12 @@ namespace Armillary::OneHanded::Hooks {
 		if (!foundSpell) return false;
 		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
 		maceProc = foundSpell;
+
+		foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
+			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_AxeAdditionalBleed");
+		if (!foundSpell) return false;
+		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
+		axeProc = foundSpell;
 
 		//Effects
 
@@ -124,9 +136,15 @@ namespace Armillary::OneHanded::Hooks {
 
 			auto* castingSource = a_target->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
 
-			if (isOneHanded && hitWeapon->IsOneHandedMace() && a_target->HasMagicEffect(markCountdown) && !a_target->IsBlocking()) {
-				if (attacker->HasPerk(maceRank2Perk) && castingSource) {
+			if (isOneHanded && castingSource && a_target->HasMagicEffect(markCountdown) && !a_target->IsBlocking()) {
+				if (hitWeapon->IsOneHandedMace() && attacker->HasPerk(maceRank2Perk) && castingSource) {
 					castingSource->CastSpellImmediate(maceProc, false, a_target, 1.0f, false, 0.0f, a_target);
+				}
+
+				if (hitWeapon->IsOneHandedAxe() && attacker->HasPerk(axeRank2Perk) && castingSource) {
+					auto* bleedEffect = *axeProc->effects.begin();
+					bleedEffect->effectItem.magnitude = a_target->GetBaseActorValue(RE::ActorValue::kHealth) / 400.0f;
+					castingSource->CastSpellImmediate(axeProc, false, a_target, 1.0f, false, 0.0f, a_target);
 				}
 			}
 

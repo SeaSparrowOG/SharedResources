@@ -12,6 +12,7 @@ namespace Armillary::OneHanded::Hooks {
 
 		inline static REL::Relocation<decltype(thunk)> func;
 		inline static RE::BGSPerk* duelistPerk{ nullptr };
+		inline static RE::BGSPerk* axeRank2Perk{ nullptr };
 		inline static RE::BGSPerk* maceRank2Perk{ nullptr };
 		inline static RE::BGSPerk* gladiatorPerk{ nullptr };
 		inline static RE::BGSPerk* opportunistPerk{ nullptr };
@@ -20,6 +21,7 @@ namespace Armillary::OneHanded::Hooks {
 		inline static RE::SpellItem* duelistProc{ nullptr };
 		inline static RE::SpellItem* duelistMark{ nullptr };
 		inline static RE::SpellItem* duelistCooldown{ nullptr };
+		inline static RE::SpellItem* axeProc{ nullptr };
 		inline static RE::SpellItem* maceProc{ nullptr };
 		inline static RE::SpellItem* opportunistProc{ nullptr };
 		inline static RE::SpellItem* wardancerProc{ nullptr };
