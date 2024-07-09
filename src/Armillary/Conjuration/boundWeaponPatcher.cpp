@@ -8,7 +8,7 @@ namespace Armillary::Conjuration::BoundWeaponPatcher {
 		auto* dataHandler = RE::TESDataHandler::GetSingleton();
 		if (!dataHandler) return false;
 		_loggerDebug("    Fetching bound weapon keyword...");
-		auto* boundWeaponKeyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("SSR_KWD_WeapTypeBound"sv);
+		auto* boundWeaponKeyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("ARM_Conjuration_KWD_WeapTypeBound"sv);
 		if (!boundWeaponKeyword) return false;
 		_loggerDebug("    Fetching weapon array...");
 		auto& weaponArray = dataHandler->GetFormArray<RE::TESObjectWEAP>();
