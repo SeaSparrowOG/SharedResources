@@ -5,6 +5,7 @@
 #include "Armillary/Armor/criticalStrikeListener.h"
 #include "Armillary/Conjuration/boundWeaponPatcher.h"
 #include "Armillary/Conjuration/reanimationSpellPatcher.h"
+#include "Armillary/OneHanded/events.h"
 #include "Armillary/OneHanded/hooks.h"
 
 namespace Armillary {
@@ -35,7 +36,11 @@ namespace Armillary {
 		_loggerInfo("_________________________________________________");
 		_loggerInfo("Patching OneHanded:");
 		_loggerInfo("_________________________________________________");
+		_loggerInfo("    >Installing One-Handed Hooks...");
 		if (!OneHanded::Hooks::Install()) return false;
+		_loggerInfo("    >Registering One-Handed event listener...");
+		if (!OneHanded::Events::Install()) return false;
+		_loggerInfo("_________________________________________________");
 		return true;
 	}
 }
