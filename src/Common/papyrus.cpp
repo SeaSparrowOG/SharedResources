@@ -26,6 +26,7 @@ namespace Papyrus {
 
 		return true;
 	}
+
 	void RefreshAbilities(STATIC_ARGS, std::vector<RE::SpellItem*> a_abilities, bool a_add = true) {
 		if (a_abilities.empty()) return;
 		auto* player = RE::PlayerCharacter::GetSingleton();

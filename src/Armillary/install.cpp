@@ -5,6 +5,8 @@
 #include "Armillary/Armor/criticalStrikeListener.h"
 #include "Armillary/Conjuration/boundWeaponPatcher.h"
 #include "Armillary/Conjuration/reanimationSpellPatcher.h"
+#include "Armillary/OneHanded/events.h"
+#include "Armillary/OneHanded/hooks.h"
 
 namespace Armillary {
 	bool InstallPatches()
@@ -31,6 +33,14 @@ namespace Armillary {
 		if (!Conjuration::BoundWeaponPatcher::PatchBoundWeapons()) return false;
 		_loggerInfo("    >Adding new reanimation spell abilities...");
 		if (!Conjuration::ReanimationSpellPatcher::ReanimationSpellPatcher::GetSingleton()->PatchReanimationSpells()) return false;
+		_loggerInfo("_________________________________________________");
+		_loggerInfo("Patching OneHanded:");
+		_loggerInfo("_________________________________________________");
+		_loggerInfo("    >Installing One-Handed Hooks...");
+		if (!OneHanded::Hooks::Install()) return false;
+		_loggerInfo("    >Registering One-Handed event listener...");
+		if (!OneHanded::Events::Install()) return false;
+		_loggerInfo("_________________________________________________");
 		return true;
 	}
 }

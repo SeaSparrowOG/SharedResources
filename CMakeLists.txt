@@ -19,15 +19,17 @@ endmacro()
 
 macro(find_commonlib_path)
 	if (CommonLibName AND NOT ${CommonLibName} STREQUAL "")
+		set_from_environment(${CommonLibName}Path)
+		set(CommonLibPath ${${CommonLibName}Path})
 		# Check extern
-		find_path(CommonLibPath
-		include/REL/Relocation.h
-		PATHS extern/${CommonLibName})
-		if (${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")
-			#Check path
-			set_from_environment(${CommonLibName}Path)
-			set(CommonLibPath ${${CommonLibName}Path})
-		endif()
+		#find_path(CommonLibPath
+		#include/REL/Relocation.h
+		#PATHS extern/${CommonLibName})
+		#if (${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")
+		#	#Check path
+		#	set_from_environment(${CommonLibName}Path)
+		#	set(CommonLibPath ${${CommonLibName}Path})
+		#endif()
 	endif()
 endmacro()
 
