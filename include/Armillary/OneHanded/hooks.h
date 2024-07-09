@@ -7,9 +7,16 @@ namespace Armillary::OneHanded::Hooks {
 	struct CombatHit
 	{
 		static bool   Install();
-		static void   thunk(RE::HitData* a_hitData, RE::TESObjectREFR* a_attacker, RE::TESObjectREFR* a_defender, RE::InventoryEntryData* a_weapon, bool a_left);
+		static void   thunk(RE::Actor* target, RE::HitData* hitData);
 		static bool   PreloadForms();
 
 		inline static REL::Relocation<decltype(thunk)> func;
+		inline static RE::BGSPerk* duelistPerk{ nullptr };
+		inline static RE::BGSPerk* gladiatorPerk{ nullptr };
+		inline static RE::BGSPerk* opportunistPerk{ nullptr };
+
+		inline static RE::SpellItem* duelistProc{ nullptr };
+		inline static RE::SpellItem* gladiatorProc{ nullptr };
+		inline static RE::SpellItem* opportunistProc{ nullptr };
 	};
 }
