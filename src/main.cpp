@@ -29,7 +29,11 @@ namespace Log {
 void MessageHandler(SKSE::MessagingInterface::Message* a_message) {
     switch (a_message->type) {
     case SKSE::MessagingInterface::kDataLoaded:
-        if (!Services::InstallDataLoadedPatches()) _loggerError("WARNING: At least one step failed.");
+        _loggerInfo("----------------------------------------------------------------");
+        if (!Services::InstallDataLoadedPatches()) {
+            _loggerError("Installation was unsuccessfull.");
+            SKSE::stl::report_and_fail("Failed to install Armillary. Check the logs for details."sv);
+        }
         _loggerInfo("Finished startup tasks.");
         _loggerInfo("----------------------------------------------------------------");
         break;
