@@ -166,7 +166,7 @@ namespace Armillary::OneHanded::Hooks {
 				if (a_target->HasPerk(gladiatorPerk)) {
 					a_hitData->totalDamage = 0.0f;
 					auto ref = a_target->GetHandle();
-					a_target->DispelEffect(maceProc, ref);
+					a_target->DispelEffect(duelistCooldown, ref);
 				}
 				else {
 					a_hitData->totalDamage /= 2.0f;
