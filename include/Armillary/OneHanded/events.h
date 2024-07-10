@@ -2,6 +2,11 @@
 
 namespace Armillary::OneHanded::Events {
 #define continueEvent RE::BSEventNotifyControl::kContinue
+	/*
+	Main workhorse. Listens for the block event, and casts the duelist proc and cooldown
+	spells on the actor that blocked if they have the duelist perk and no shields equipped.
+	These spells are used by the One-Handed hooks to determine if a parry is performed.
+	*/
 	class CachedActorRegister : public SingletonClass<CachedActorRegister>,
 		public RE::BSTEventSink<RE::BSAnimationGraphEvent> {
 	public:
@@ -18,6 +23,9 @@ namespace Armillary::OneHanded::Events {
 		RE::SpellItem* duelistCountdown{ nullptr };
 	};
 
+	/*
+	Adds and removes actors as necessary from the CachedActorRegister, based on them being loaded or unloaded.
+	*/
 	class LoadUnloadEventListener : public SingletonClass<LoadUnloadEventListener>,
 		public RE::BSTEventSink<RE::TESObjectLoadedEvent> {
 	public:
