@@ -11,6 +11,7 @@
 namespace Armillary {
 	bool InstallPatches()
 	{
+		auto now = std::chrono::high_resolution_clock::now();
 		_loggerInfo("Preparing to Install Armillary.");
 		_loggerInfo("_________________________________________________");
 		_loggerInfo("Patching Armor:");
@@ -41,6 +42,9 @@ namespace Armillary {
 		_loggerInfo("    >Registering One-Handed event listener...");
 		if (!OneHanded::Events::Install()) return false;
 		_loggerInfo("_________________________________________________");
+		auto then = std::chrono::high_resolution_clock::now();
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(then - now).count();
+		_loggerInfo("Patch time: {}ms", elapsed);
 		return true;
 	}
 }

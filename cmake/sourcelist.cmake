@@ -9,6 +9,5 @@ set(sources ${sources}
 	src/Armillary/OneHanded/hooks.cpp
 	src/Armillary/install.cpp
 	src/Common/papyrus.cpp
-	src/Common/utilityFuncs.cpp
 	src/main.cpp
 )

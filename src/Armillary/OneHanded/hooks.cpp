@@ -1,7 +1,42 @@
 #include "Armillary/OneHanded/hooks.h"
-#include "Common/utilityFuncs.h"
 
 namespace Armillary::OneHanded::Hooks {
+	inline RE::BGSPerk* GetPerkVariable(std::string_view a_varName, 
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::BGSPerk*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
+
+	inline RE::SpellItem* GetSpellVariable(std::string_view a_varName,
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::SpellItem*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
+
+	inline RE::EffectSetting* GetEffectVariable(std::string_view a_varName,
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::EffectSetting*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
+
 	inline bool IsVulnerable(const RE::Actor* a_target)
 	{
 		bool isStaggered = a_target->actorState2.staggered > 0;
@@ -25,94 +60,45 @@ namespace Armillary::OneHanded::Hooks {
 
 	bool CombatHit::PreloadForms()
 	{
-		auto* foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_075_Gladiator");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		gladiatorPerk = foundPerk;
+		const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+		if (!vm) return false;
 
-		foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_020_Duelist");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		duelistPerk = foundPerk;
+		const auto bindPolicy = vm->GetObjectBindPolicy();
+		const auto handlePolicy = vm->GetObjectHandlePolicy();
 
-		foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_050_ArmorBreaker");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		opportunistPerk = foundPerk;
+		if (!bindPolicy || !handlePolicy) return false;
 
-		foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_100_Wardancer");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		wardancerPerk = foundPerk;
+		const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
+		const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
 
-		foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_060_Paladin");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		maceRank2Perk = foundPerk;
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
+		std::uint32_t nonConverted;
+		bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder"sv, properties, nonConverted);
 
-		foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_060_Carver");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		axeRank2Perk = foundPerk;
+		duelistPerk = GetPerkVariable("ARM_OneHanded_PRK_020_Duelist"sv, &properties);
+		opportunistPerk = GetPerkVariable("ARM_OneHanded_PRK_050_ArmorBreaker"sv, &properties);
+		wardancerPerk = GetPerkVariable("ARM_OneHanded_PRK_100_Wardancer"sv, &properties);
+		maceRank2Perk = GetPerkVariable("ARM_OneHanded_PRK_060_Paladin"sv, &properties);
+		axeRank2Perk = GetPerkVariable("ARM_OneHanded_PRK_060_Carver"sv, &properties);
+		gladiatorPerk = GetPerkVariable("ARM_OneHanded_PRK_075_Gladiator"sv, &properties);
 
 		//Spells
 
-		auto* foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_DuelistProc");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		duelistProc = foundSpell;
-
-		foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_DuelistMark");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		duelistMark = foundSpell;
-
-		foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_DamageArmorOpportunity");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		opportunistProc = foundSpell;
-
-		foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_WardancerProc");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		wardancerProc = foundSpell;
-
-		foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_MaceDamageArmor");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		maceProc = foundSpell;
-
-		foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_AxeAdditionalBleed");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		axeProc = foundSpell;
+		duelistProc = GetSpellVariable("ARM_OneHanded_SPL_DuelistProc"sv, &properties);
+		duelistMark = GetSpellVariable("ARM_OneHanded_SPL_DuelistMark"sv, &properties);
+		opportunistProc = GetSpellVariable("ARM_OneHanded_SPL_DamageArmorOpportunity"sv, &properties);
+		wardancerProc = GetSpellVariable("ARM_OneHanded_SPL_WardancerProc"sv, &properties);
+		maceProc = GetSpellVariable("ARM_OneHanded_SPL_MaceDamageArmor"sv, &properties);
+		axeProc = GetSpellVariable("ARM_OneHanded_SPL_AxeAdditionalBleed"sv, &properties);
 
 		//Effects
 
-		auto* foundEffect = UtilityFunctions::GetFormFromQuestScript<RE::EffectSetting>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_MGF_DuelistCountdownEffect");
-		if (!foundEffect) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundEffect));
-		duelistCountdown = foundEffect;
+		duelistCountdown = GetEffectVariable("ARM_OneHanded_MGF_DuelistCountdownEffect"sv, &properties);
+		markCountdown = GetEffectVariable("ARM_OneHanded_MGF_MarkCountdownEffect"sv, &properties);
 
-		foundEffect = UtilityFunctions::GetFormFromQuestScript<RE::EffectSetting>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_MGF_MarkCountdownEffect");
-		if (!foundEffect) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundEffect));
-		markCountdown = foundEffect;
-		return true;
+		return (duelistPerk && opportunistPerk && wardancerPerk && maceRank2Perk && axeRank2Perk && gladiatorPerk &&
+			duelistProc && duelistMark && opportunistProc && wardancerProc && maceProc && axeProc &&
+			duelistCountdown && markCountdown);
 	}
 
 	bool CombatHit::Install()

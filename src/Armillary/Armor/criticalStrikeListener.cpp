@@ -1,7 +1,29 @@
 #include "Armillary/Armor/criticalStrikeListener.h"
-#include "Common/utilityFuncs.h"
 
 namespace Armillary::Armor::CriticalStrike {
+	inline RE::BGSPerk* GetPerkVariable(std::string_view a_varName,
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::BGSPerk*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
+
+	inline RE::SpellItem* GetSpellVariable(std::string_view a_varName,
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::SpellItem*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
 
 	bool RegisterListener()
 	{
@@ -10,19 +32,25 @@ namespace Armillary::Armor::CriticalStrike {
 
 	bool CriticalListener::RegisterListener()
 	{
-		auto* foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Armor_PRK_070_CombatRush");
-		if (!foundPerk) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundPerk));
-		duelistPerk = foundPerk;
+		const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+		if (!vm) return false;
 
-		auto* foundSpell = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_Armor_SPL_CombatRushProc");
-		if (!foundSpell) return false;
-		_loggerDebug("Setting: {}", _debugEDID(foundSpell));
-		duelistProc = foundSpell;
+		const auto bindPolicy = vm->GetObjectBindPolicy();
+		const auto handlePolicy = vm->GetObjectHandlePolicy();
 
-		if (!duelistPerk) return false;
+		if (!bindPolicy || !handlePolicy) return false;
+
+		const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
+		const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
+
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
+		std::uint32_t nonConverted;
+		bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder"sv, properties, nonConverted);
+
+		duelistPerk = GetPerkVariable("ARM_Armor_PRK_070_CombatRush"sv, &properties);
+		duelistProc = GetSpellVariable("ARM_Armor_SPL_CombatRushProc"sv, &properties);
+		if (!(duelistPerk && duelistProc)) return false;
+
 		_loggerDebug("Registering Critical Hit Listener...");
 		RE::CriticalHit::GetEventSource()->AddEventSink<RE::CriticalHit::Event>(this);
 		return true;

@@ -9,7 +9,6 @@ set(headers ${headers}
 	include/Armillary/OneHanded/hooks.h
 	include/Armillary/install.h
 	include/Common/papyrus.h
-	include/Common/utilityFuncs.h
 	include/PCH.h
 	include/services.h
 )

@@ -1,20 +1,53 @@
 #include "Armillary/OneHanded/events.h"
-#include "Common/utilityFuncs.h"
 
 namespace Armillary::OneHanded::Events {
+	inline RE::BGSPerk* GetPerkVariable(std::string_view a_varName,
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::BGSPerk*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
+
+	inline RE::SpellItem* GetSpellVariable(std::string_view a_varName,
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable>* a_map) {
+		if (!a_map->contains(a_varName)) return nullptr;
+
+		auto& var = a_map->find(a_varName)->second;
+		if (var.IsNoneObject() || !var.IsObject()) return nullptr;
+		auto* foundObject = var.Unpack<RE::SpellItem*>();
+		if (!foundObject) return nullptr;
+
+		return foundObject;
+	}
+
 	bool LoadUnloadEventListener::RegisterListener()
 	{
 		auto* eventHolder = RE::ScriptEventSourceHolder::GetSingleton();
-		if (!eventHolder) return false;
+		if (!eventHolder) return false; 
+		
+		const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+		if (!vm) return false;
 
-		auto* foundProc = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_DuelistProc");
+		const auto bindPolicy = vm->GetObjectBindPolicy();
+		const auto handlePolicy = vm->GetObjectHandlePolicy();
 
-		auto* foundCountdown = UtilityFunctions::GetFormFromQuestScript<RE::SpellItem>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_SPL_DuelistProcCountdown");
+		if (!bindPolicy || !handlePolicy) return false;
 
-		auto* foundPerk = UtilityFunctions::GetFormFromQuestScript<RE::BGSPerk>
-			("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv, "ARM_ObjectHolder", "ARM_OneHanded_PRK_020_Duelist");
+		const auto quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("ARM_Framework_QST_ArmillaryMaintenanceQuest"sv);
+		const auto handle = handlePolicy->GetHandleForObject(RE::TESQuest::FORMTYPE, quest);
+
+		RE::BSTScrapHashMap<RE::BSFixedString, RE::BSScript::Variable> properties;
+		std::uint32_t nonConverted;
+		bindPolicy->GetInitialPropertyValues(handle, "ARM_ObjectHolder"sv, properties, nonConverted);
+
+		auto* foundProc = GetSpellVariable("ARM_OneHanded_SPL_DuelistProc"sv, &properties);
+		auto* foundCountdown = GetSpellVariable("ARM_OneHanded_SPL_DuelistProcCountdown"sv, &properties);
+		auto* foundPerk = GetPerkVariable("ARM_OneHanded_PRK_020_Duelist"sv, &properties);
 
 		if (!CachedActorRegister::GetSingleton()->RegisterAbilities(foundPerk, foundProc, foundCountdown)) return false;
 		eventHolder->AddEventSink(this);
