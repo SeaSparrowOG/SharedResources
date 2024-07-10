@@ -37,7 +37,7 @@ namespace Armillary::OneHanded::Hooks {
 		return foundObject;
 	}
 
-	inline bool IsVulnerable(const RE::Actor* a_target)
+	inline bool IsVulnerable(RE::Actor* a_target, RE::EffectSetting* a_duelistProc)
 	{
 		bool isStaggered = a_target->actorState2.staggered > 0;
 		bool isDrawingBow = a_target->GetAttackState() == RE::ATTACK_STATE_ENUM::kBowDrawn;
@@ -55,7 +55,27 @@ namespace Armillary::OneHanded::Hooks {
 		bool castingLeft = equippedLeftSpell ? a_target->IsCasting(equippedLeftSpell) : false;
 		bool castingRight = equippedRightSpell ? a_target->IsCasting(equippedRightSpell) : false;
 
-		return castingLeft || castingRight || isPowerAttacking || isDrawingBow || isStaggered;
+		bool isWarding = false;
+		if (castingLeft) {
+			for (auto* effect : equippedLeftSpell->effects) {
+				if (!effect->baseEffect) continue;
+				if (effect->baseEffect->data.associatedSkill != RE::ActorValue::kWardPower) continue;
+				isWarding = true;
+				break;
+			}
+		}
+
+		if (!isWarding && castingRight) {
+			for (auto* effect : equippedRightSpell->effects) {
+				if (!effect->baseEffect) continue;
+				if (effect->baseEffect->data.associatedSkill != RE::ActorValue::kWardPower) continue;
+				isWarding = true;
+				break;
+			}
+		}
+
+		if (isWarding) return false;
+		return castingLeft || castingRight || isPowerAttacking || isDrawingBow || isStaggered || a_target->HasMagicEffect(a_duelistProc);
 	}
 
 	bool CombatHit::PreloadForms()
@@ -134,8 +154,9 @@ namespace Armillary::OneHanded::Hooks {
 				}
 			}
 
-			if (isOneHanded && attacker->HasPerk(duelistPerk) && IsVulnerable(a_target)) {
+			if (isOneHanded && attacker->HasPerk(duelistPerk) && IsVulnerable(a_target, duelistCountdown)) {
 				a_hitData->flags.set(RE::HitData::Flag::kCritical);
+				a_hitData->totalDamage *= 1.25f;
 
 				if (castingSource) {
 					if (attacker->HasPerk(opportunistPerk)) {
