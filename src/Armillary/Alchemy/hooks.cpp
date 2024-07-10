@@ -172,6 +172,14 @@ namespace Armillary {
         auto* player = RE::PlayerCharacter::GetSingleton();
         auto* singleton = GetSingleton();
 
+        float newFactor = SelectedItemMonitor::GetSingleton()->GetEfficiencyBoostModifier();
+        if (newFactor > 1.0f) {
+            auto& effects = a_alchemyItem->effects;
+            for (auto* effect : effects) {
+                effect->effectItem.magnitude *= newFactor;
+            }
+        }
+
         if (a_alchemyItem->IsPoison()) {
             if (player->HasPerk(singleton->slowDeathPerk)) {
                 if (const auto effect = new RE::Effect()) {
@@ -218,15 +226,6 @@ namespace Armillary {
                 }
             }
         }
-
-        float newFactor = SelectedItemMonitor::GetSingleton()->GetEfficiencyBoostModifier();
-        if (newFactor > 1.0f) {
-            auto& effects = a_alchemyItem->effects;
-            for (auto* effect : effects) {
-                effect->effectItem.magnitude *= newFactor;
-            }
-        }
-
         return _originalCall(a_dataHandler, a_alchemyItem);
     }
 }
