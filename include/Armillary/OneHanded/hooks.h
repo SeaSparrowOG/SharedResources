@@ -14,6 +14,7 @@ namespace Armillary::OneHanded::Hooks {
 		inline static RE::BGSPerk* duelistPerk{ nullptr };
 		inline static RE::BGSPerk* axeRank2Perk{ nullptr };
 		inline static RE::BGSPerk* maceRank2Perk{ nullptr };
+		inline static RE::BGSPerk* swordRank2Perk{ nullptr };
 		inline static RE::BGSPerk* gladiatorPerk{ nullptr };
 		inline static RE::BGSPerk* opportunistPerk{ nullptr };
 		inline static RE::BGSPerk* wardancerPerk{ nullptr };

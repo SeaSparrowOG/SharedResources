@@ -100,6 +100,7 @@ namespace Armillary::OneHanded::Hooks {
 		wardancerPerk = GetPerkVariable("ARM_OneHanded_PRK_100_Wardancer"sv, &properties);
 		maceRank2Perk = GetPerkVariable("ARM_OneHanded_PRK_060_Paladin"sv, &properties);
 		axeRank2Perk = GetPerkVariable("ARM_OneHanded_PRK_060_Carver"sv, &properties);
+		swordRank2Perk = GetPerkVariable("ARM_OneHanded_PRK_060_Bladesman"sv, &properties);
 		gladiatorPerk = GetPerkVariable("ARM_OneHanded_PRK_075_Gladiator"sv, &properties);
 
 		//Spells
@@ -116,7 +117,7 @@ namespace Armillary::OneHanded::Hooks {
 		duelistCountdown = GetEffectVariable("ARM_OneHanded_MGF_DuelistCountdownEffect"sv, &properties);
 		markCountdown = GetEffectVariable("ARM_OneHanded_MGF_MarkCountdownEffect"sv, &properties);
 
-		return (duelistPerk && opportunistPerk && wardancerPerk && maceRank2Perk && axeRank2Perk && gladiatorPerk &&
+		return (duelistPerk && opportunistPerk && wardancerPerk && maceRank2Perk && axeRank2Perk && gladiatorPerk && swordRank2Perk &&
 			duelistProc && duelistMark && opportunistProc && wardancerProc && maceProc && axeProc &&
 			duelistCountdown && markCountdown);
 	}
@@ -141,13 +142,18 @@ namespace Armillary::OneHanded::Hooks {
 				false;
 
 			auto* castingSource = a_target->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+			float criticalMult = 4.0f;
 
 			if (isOneHanded && castingSource && a_target->HasMagicEffect(markCountdown) && !a_target->IsBlocking()) {
-				if (hitWeapon->IsOneHandedMace() && attacker->HasPerk(maceRank2Perk) && castingSource) {
+				if (hitWeapon->IsOneHandedSword() && attacker->HasPerk(swordRank2Perk)) {
+					criticalMult *= 4.0f;
+				}
+
+				if (hitWeapon->IsOneHandedMace() && attacker->HasPerk(maceRank2Perk)) {
 					castingSource->CastSpellImmediate(maceProc, false, a_target, 1.0f, false, 0.0f, a_target);
 				}
 
-				if (hitWeapon->IsOneHandedAxe() && attacker->HasPerk(axeRank2Perk) && castingSource) {
+				if (hitWeapon->IsOneHandedAxe() && attacker->HasPerk(axeRank2Perk)) {
 					auto* bleedEffect = *axeProc->effects.begin();
 					bleedEffect->effectItem.magnitude = a_target->GetBaseActorValue(RE::ActorValue::kHealth) / 400.0f;
 					castingSource->CastSpellImmediate(axeProc, false, a_target, 1.0f, false, 0.0f, a_target);
@@ -156,17 +162,18 @@ namespace Armillary::OneHanded::Hooks {
 
 			if (isOneHanded && attacker->HasPerk(duelistPerk) && IsVulnerable(a_target, duelistCountdown)) {
 				a_hitData->flags.set(RE::HitData::Flag::kCritical);
-				a_hitData->totalDamage *= 1.25f;
 
-				if (castingSource) {
-					if (attacker->HasPerk(opportunistPerk)) {
-						castingSource->CastSpellImmediate(opportunistProc, false, a_target, 1.0f, false, 0.0f, a_target);
-					}
-
-					if (attacker->HasPerk(wardancerPerk) && a_target->HasMagicEffect(markCountdown)) {
-						castingSource->CastSpellImmediate(wardancerProc, false, attacker, 1.0f, false, 0.0f, attacker);
-					}
+				if (castingSource && attacker->HasPerk(opportunistPerk)) {
+					castingSource->CastSpellImmediate(opportunistProc, false, a_target, 1.0f, false, 0.0f, a_target);
 				}
+			}
+
+			if (castingSource && attacker->HasPerk(wardancerPerk) && a_target->HasMagicEffect(markCountdown)) {
+				castingSource->CastSpellImmediate(wardancerProc, false, attacker, 1.0f, false, 0.0f, attacker);
+			}
+
+			if (a_hitData->flags.any(RE::HitData::Flag::kCritical) && hitWeapon) {
+				a_hitData->totalDamage += criticalMult * hitWeapon->GetCritDamage();
 			}
 
 			if (a_target->IsBlocking() && a_target->HasPerk(duelistPerk) && a_target->HasMagicEffect(duelistCountdown)) {
